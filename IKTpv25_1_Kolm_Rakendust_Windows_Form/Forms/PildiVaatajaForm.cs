@@ -95,6 +95,7 @@ namespace Naidis_IKTpv25_Windows_Forms
         private readonly List<string> kaustaFailid = new List<string>();
         private int kaustaIndeks = -1;
         private readonly Dictionary<string, Bitmap> miniatuurid = new Dictionary<string, Bitmap>();
+        private readonly List<Bitmap> vanadMiniatuurid = new List<Bitmap>();
 
         public PildiVaatajaForm()
         {
@@ -188,7 +189,7 @@ namespace Naidis_IKTpv25_Windows_Forms
                 sketchCheckBox, setBackColorButton, clearPictureButton, closeButton));
 
             // ---------- Teine tööriistariba: suum ja slaidid ----------
-            
+
             zoomBar = new TrackBar
             {
                 Minimum = 10,
@@ -943,12 +944,15 @@ namespace Naidis_IKTpv25_Windows_Forms
             }
             SeadedHoidla.Salvesta();
 
-            // Fail võis olla üle kirjutatud: vana miniatuur visatakse ära
+            // Fail võis olla üle kirjutatud: vana miniatuur visatakse ära.
+            // Seda EI vabastata siin, sest paneelis olev PictureBox kasutab seda veel
+            // (vabastatud pilt põhjustaks ArgumentException "Parameter is not valid").
+            // Vabastamine toimub UuendaMiniatuurid sees pärast vanade kontrollide eemaldamist.
             Bitmap vana;
             if (miniatuurid.TryGetValue(tee, out vana))
             {
-                vana.Dispose();
                 miniatuurid.Remove(tee);
+                vanadMiniatuurid.Add(vana);
             }
             UuendaMiniatuurid();
         }
@@ -991,13 +995,32 @@ namespace Naidis_IKTpv25_Windows_Forms
             while (miniPaneel.Controls.Count > 0)
             {
                 Control vana = miniPaneel.Controls[0];
+                PictureBox vanaPb = vana as PictureBox;
+                if (vanaPb != null)
+                {
+                    vanaPb.Image = null; // pilt kuulub vahemällu, mitte kontrollile
+                }
                 miniPaneel.Controls.RemoveAt(0);
                 vana.Dispose();
             }
 
+            // Nüüd, kui ükski kontroll vanu pilte enam ei kasuta, saab need vabastada
+            foreach (Bitmap b in vanadMiniatuurid)
+            {
+                b.Dispose();
+            }
+            vanadMiniatuurid.Clear();
+
             // Kustutatud ja avamatud failid võetakse nimekirjast välja
             List<string> viimased = SeadedHoidla.Praegune.ViimasedFailid;
             viimased.RemoveAll(f => !File.Exists(f));
+
+            // Kustutatud failide miniatuurid vabastatakse vahemälust
+            foreach (string kustutatud in miniatuurid.Keys.Where(k => !viimased.Contains(k)).ToList())
+            {
+                miniatuurid[kustutatud].Dispose();
+                miniatuurid.Remove(kustutatud);
+            }
 
             if (viimased.Count > 0)
             {
@@ -1052,6 +1075,11 @@ namespace Naidis_IKTpv25_Windows_Forms
                 mini.Dispose();
             }
             miniatuurid.Clear();
+            foreach (Bitmap b in vanadMiniatuurid)
+            {
+                b.Dispose();
+            }
+            vanadMiniatuurid.Clear();
         }
     }
 }
