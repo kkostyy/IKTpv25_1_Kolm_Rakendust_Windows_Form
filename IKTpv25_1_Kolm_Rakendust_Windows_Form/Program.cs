@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 
-namespace KolmRakendust
+namespace Naidis_IKTpv25_Windows_Forms
 {
     internal static class Program
     {

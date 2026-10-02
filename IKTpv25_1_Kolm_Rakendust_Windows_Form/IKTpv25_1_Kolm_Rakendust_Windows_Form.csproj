@@ -6,8 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <RootNamespace>KolmRakendust</RootNamespace>
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <RootNamespace>Naidis_IKTpv25_Windows_Forms</RootNamespace>
   </PropertyGroup>
 
 </Project>
